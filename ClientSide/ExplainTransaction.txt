@@ -1,0 +1,5 @@
+a. When a new transaction starts (i.e., when a client sends a query with a new token), check if a connection for that token already exists in the activeTransactions. If not, create a new connection, set auto-commit to false, and save the connection against the token in activeTransactions.
+
+b. If the client sends subsequent queries with the same token, retrieve the connection from activeTransactions and use it. Do not commit after every operation since the transaction is still ongoing.
+
+c. Only commit (or rollback) when the client indicates the end of the transaction. Also, if the token is "N/A", you'll know it's a standalone query, so you can commit immediately and close the connection if needed.
