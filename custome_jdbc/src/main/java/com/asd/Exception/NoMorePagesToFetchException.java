@@ -1,4 +1,4 @@
-package com.khanfar.Exception;
+package com.asd.Exception;
 
 public class NoMorePagesToFetchException extends RuntimeException{
     public NoMorePagesToFetchException(String str ) {

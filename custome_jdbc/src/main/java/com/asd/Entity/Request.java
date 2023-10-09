@@ -1,6 +1,4 @@
-package com.khanfar.Entity;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package com.asd.Entity;
 
 public class Request {
 

@@ -1,4 +1,4 @@
-package com.khanfar.MetaData;
+package com.asd.MetaData;
 
     public class Page {
         private int pageNumber;

@@ -1,10 +1,10 @@
-package com.khanfar.Controller;
+package com.asd.Controller;
 
-import com.khanfar.Entity.Request;
-import com.khanfar.Entity.RequestSelect;
-import com.khanfar.Exception.NoMorePagesToFetchException;
-import com.khanfar.MetaData.MetaData;
-import com.khanfar.Service.JdbcService;
+import com.asd.Entity.Request;
+import com.asd.Entity.RequestSelect;
+import com.asd.Exception.NoMorePagesToFetchException;
+import com.asd.MetaData.MetaData;
+import com.asd.Service.JdbcService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

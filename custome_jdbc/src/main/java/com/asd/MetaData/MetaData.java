@@ -1,4 +1,4 @@
-package com.khanfar.MetaData;
+package com.asd.MetaData;
 
 public class MetaData {
     private String DriverName ;
@@ -7,14 +7,25 @@ public class MetaData {
     private String productName ;
     private String URL ;
     private String ProductVersion ;
+    private String ConnectionToken ;
 
-    public MetaData(String driverName, String driverVersion, String userName, String productName , String URL , String ProductVersion) {
+
+    public MetaData(String driverName, String driverVersion, String userName, String productName , String URL , String ProductVersion , String connectionToken) {
         DriverName = driverName;
         this.driverVersion = driverVersion;
         this.userName = userName;
         this.productName = productName;
         this.URL = URL ;
         this.ProductVersion = ProductVersion ;
+        this.ConnectionToken = connectionToken ;
+    }
+
+    public String getConnectionToken() {
+        return ConnectionToken;
+    }
+
+    public void setConnectionToken(String connectionToken) {
+        ConnectionToken = connectionToken;
     }
 
     public String getProductVersion() {

@@ -1,4 +1,4 @@
-package com.khanfar;
+package com.asd;
 
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 

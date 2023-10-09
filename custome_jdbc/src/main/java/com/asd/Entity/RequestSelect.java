@@ -1,4 +1,4 @@
-package com.khanfar.Entity;
+package com.asd.Entity;
 
 public class RequestSelect {
 

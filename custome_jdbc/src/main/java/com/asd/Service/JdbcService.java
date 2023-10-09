@@ -1,9 +1,9 @@
-package com.khanfar.Service;
+package com.asd.Service;
 
-import com.khanfar.Entity.Request;
-import com.khanfar.Entity.RequestSelect;
-import com.khanfar.Exception.NoMorePagesToFetchException;
-import com.khanfar.MetaData.MetaData;
+import com.asd.Entity.Request;
+import com.asd.Entity.RequestSelect;
+import com.asd.Exception.NoMorePagesToFetchException;
+import com.asd.MetaData.MetaData;
 import io.agroal.api.AgroalDataSource;
 
 import io.agroal.api.AgroalDataSourceMetrics;
@@ -14,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @ApplicationScoped
 public class JdbcService {
@@ -28,14 +28,18 @@ public class JdbcService {
     TransactionService transactionService;
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
-
+    public static Map<String, Connection> activeConnection = new ConcurrentHashMap<>();
 
     private String dataBaseName;
+
+    public Map<String , Connection> getAllActiveConnection() {
+       return this.activeConnection ;
+    }
 
     public List<LinkedHashMap<String, Object>> fetchByQuery(String token, String query) throws SQLException, InvalidTransactionException {
         Connection connection = null;
         try {
-             connection = getManagedConnection(token);
+             connection = getActiveConnection(token);
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
             List<LinkedHashMap<String, Object>> metaDataList = retrieveResultSetMetaData(resultSet);
@@ -44,11 +48,6 @@ public class JdbcService {
             System.out.println("TOKEN1 : " + token);
             System.out.println("query : " + query);
 
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-
-            }
             statement.close();
             resultSet.close();
             return metaDataList;
@@ -64,7 +63,7 @@ public class JdbcService {
     }
 
     public List<LinkedHashMap<String, Object>> fetchByQueryWithPaging(String token, RequestSelect requestSelect) throws SQLException, InvalidTransactionException {
-        Connection connection = getManagedConnection(token);
+        Connection connection = getActiveConnection(token);
         try {
 
 
@@ -79,10 +78,7 @@ public class JdbcService {
                 throw new NoMorePagesToFetchException("No more pages to fetch");
             }
 
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-            }
+
 
 
             preparedStatement.close();
@@ -100,17 +96,12 @@ public class JdbcService {
 
 
     public int insert(String token, String query) throws SQLException, InvalidTransactionException {
-        Connection connection = getManagedConnection(token);
-int count = 0 ;
+        Connection connection = getActiveConnection(token);
+         int count = 0 ;
 
         try (Statement statement = connection.createStatement()) {
             count = statement.executeUpdate(query);
 
-            // If standalone query (token is "N/A"), commit and close
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-            }
 
         } catch (SQLException e) {
             if (connection != null && !connection.getAutoCommit()) {
@@ -123,17 +114,14 @@ int count = 0 ;
     }
 
     public int Update(String token, String query) throws SQLException, InvalidTransactionException {
-        Connection connection = getManagedConnection(token);
+        Connection connection = getActiveConnection(token);
         int count = 0 ;
 
         try (Statement statement = connection.createStatement()) {
             count = statement.executeUpdate(query);
 
             // If standalone query (token is "N/A"), commit and close
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-            }
+
 
         } catch (SQLException e) {
             if (connection != null && !connection.getAutoCommit()) {
@@ -147,17 +135,13 @@ int count = 0 ;
     }
 
     public int Delete(String token, String query) throws SQLException, InvalidTransactionException {
-        Connection connection = getManagedConnection(token);
+        Connection connection = getActiveConnection(token);
         int count = 0 ;
 
         try (Statement statement = connection.createStatement()) {
             count = statement.executeUpdate(query);
 
-            // If standalone query (token is "N/A"), commit and close
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-            }
+
 
         } catch (SQLException e) {
             if (connection != null && !connection.getAutoCommit()) {
@@ -170,17 +154,13 @@ int count = 0 ;
     }
 
     public int createTable(String token, String query) throws SQLException, InvalidTransactionException {
-        Connection connection = getManagedConnection(token);
+        Connection connection = getActiveConnection(token);
         int count = 0 ;
 
         try (Statement statement = connection.createStatement()) {
             count = statement.executeUpdate(query);
 
-            // If standalone query (token is "N/A"), commit and close
-            if (token.trim().equalsIgnoreCase("N/A")) {
-                connection.commit();
-                connection.close();
-            }
+
 
         } catch (SQLException e) {
             if (connection != null && !connection.getAutoCommit()) {
@@ -201,12 +181,14 @@ int count = 0 ;
         System.out.println("Available connections: " + metrics.availableCount());
         System.out.println(metrics.acquireCount());
         if (request.getUsername().equals("root") && request.getPassword().equals("1234")) {
-            System.out.println("login" + this.defaultDataSource.getConnection());
 
-            try (Connection connection = defaultDataSource.getConnection()) {
+                Connection connection = this.defaultDataSource.getConnection();
+                    String connectionToken = generateToken() ;
 
+             this.activeConnection.put(connectionToken, connection) ;
 
-                DatabaseMetaData databaseMetaData = connection.getMetaData();
+            System.out.println("all connection from authunticate : " + this.getAllActiveConnection());
+            DatabaseMetaData databaseMetaData = connection.getMetaData();
                 this.dataBaseName = databaseMetaData.getDatabaseProductName();
                 initializeConnection(connection);
 
@@ -217,20 +199,16 @@ int count = 0 ;
                         databaseMetaData.getUserName(),
                         databaseMetaData.getDatabaseProductName(),
                         databaseMetaData.getURL(),
-                        databaseMetaData.getDatabaseProductVersion()
+                        databaseMetaData.getDatabaseProductVersion() , connectionToken
                 );
-            }
+
         } else {
             throw new IllegalArgumentException("username or password not correct!");
         }
     }
 
 
-    public Connection getConnection() throws SQLException {
-        Connection connection = this.defaultDataSource.getConnection();
-        initializeConnection(connection);
-        return connection;
-    }
+
 
     private PreparedStatement createPreparedStatementWithPaging(Connection connection, RequestSelect requestSelect) throws SQLException {
         DatabaseMetaData databaseMetaData = connection.getMetaData();
@@ -329,30 +307,14 @@ int count = 0 ;
         }
     }
 
-    private Connection getManagedConnection(String token) throws SQLException {
-        Connection connection;
-
-        logger.info("All Connections from ConnectionManagmer  : {} " , this.transactionService.getActiveTransactions());
-        logger.info("Current Token from ConnectionManager : {}" , token);
-        if (token.trim().equalsIgnoreCase("N/A")) {
-            logger.info("StandAlone Connection with token  : {}" , token);
-
-            connection = getConnection();
-            connection.setAutoCommit(false);  // To manage standalone commits
-        } else if (this.transactionService.getActiveTransactions().containsKey(token)) {
-            logger.info("get Already Connection from hashMap with token  : {}" , token);
-            connection = this.transactionService.getActiveTransactions().get(token);
-        } else {
-            logger.info("get Already Connection from hashMap with token  : {}" , token);
-
-            token = transactionService.startTransaction();
-            connection = this.transactionService.getActiveTransactions().get(token);
-            logger.info("All Connections from ConnectionManagmer  : {} " , this.transactionService.getActiveTransactions());
 
 
-        }
-        initializeConnection(connection);
-        return connection;
+    public Connection getActiveConnection(String token) {
+     return this.activeConnection.get(token.trim()) ;
+    }
+
+    private String generateToken() {
+        return UUID.randomUUID().toString();
     }
 
     public AgroalDataSourceMetrics getMetrics() {

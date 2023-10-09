@@ -1,8 +1,7 @@
-package com.khanfar.Controller;
+package com.asd.Controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.khanfar.Service.TransactionService;
+import com.asd.Service.TransactionService;
 import jakarta.inject.Inject;
 import jakarta.transaction.InvalidTransactionException;
 import jakarta.ws.rs.Consumes;
@@ -28,10 +27,10 @@ TransactionService transactionService;
     @Path("/TOKEN_START")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response StartTransaction(String token) {
+    public Response StartTransaction(Map<String, Object> requestData) {
         System.out.println("Start Transaction ");
         try {
-         return Response.ok(transactionService.startTransaction()).build();
+         return Response.ok(transactionService.startTransaction((String) requestData.get("token"))).build();
         } catch (SQLException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
@@ -101,7 +100,6 @@ TransactionService transactionService;
         System.out.println("Start Commit ");
         String token = (String) requestData.get("token");
 
-        System.out.println("Commit : "+transactionService.getActiveTransactions());
         try {
             transactionService.commit( token);
             return  Response.ok("true").build();
