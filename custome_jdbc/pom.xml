@@ -33,11 +33,6 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-resteasy</artifactId>
     </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>8.0.25</version> <!-- Use the appropriate version here -->
-    </dependency>
 
 
 
