@@ -66,7 +66,6 @@ JdbcService jdbcService  ;
            List<LinkedHashMap<String, Object>> list;
             list = jdbcService.fetchByQuery(requestSelect.getToken() ,decodedQueryParameterValue);
             return Response.ok(list).build();
-
         }
         catch (SQLException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
